@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: match-engine
+  # Kafka配置
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+      acks: all
+      retries: 3
+      batch-size: 16384
+      buffer-memory: 33554432
+    consumer:
+      group-id: match-engine-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 500
+      
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 3000
+    # MongoDB配置
+    mongodb:
+      uri: mongodb://localhost:27017/exchange
+      
+  # Nacos配置
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: public
+      config:
+        server-addr: localhost:8848
+        file-extension: yaml
+        
+# 应用自定义配置
+match:
+  topic:
+    orders: match_orders
+    trades: match_trades
+    order-book: order_book_updates
+    user-tasks: user_operation_tasks
+  backup:
+    save-interval: 300000  # 5分钟，单位毫秒
+  node:
+    id: ${NODE_ID:1}  # 默认为1，可通过环境变量设置
+
+logging:
+  level:
+    root: INFO
+    com.exchange.match: DEBUG 
