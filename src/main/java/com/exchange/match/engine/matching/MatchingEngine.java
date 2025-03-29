@@ -45,7 +45,7 @@ public class MatchingEngine {
         modifiedBidPrices.clear();
         modifiedAskPrices.clear();
         
-        TradeExecutionResult.TradeExecutionResultBuilder resultBuilder = TradeExecutionResult.builder()
+        TradeExecutionResult.Builder resultBuilder = TradeExecutionResult.builder()
                 .offset(offset);
         
         // 如果是市价单
@@ -72,7 +72,7 @@ public class MatchingEngine {
      * @param order 限价单
      * @param resultBuilder 结果构建器
      */
-    private void processLimitOrder(Order order, TradeExecutionResult.TradeExecutionResultBuilder resultBuilder) {
+    private void processLimitOrder(Order order, TradeExecutionResult.Builder resultBuilder) {
         BigDecimal remainingQty = order.getQuantity();
         
         // 买单
@@ -113,7 +113,7 @@ public class MatchingEngine {
      * @param order 市价单
      * @param resultBuilder 结果构建器
      */
-    private void processMarketOrder(Order order, TradeExecutionResult.TradeExecutionResultBuilder resultBuilder) {
+    private void processMarketOrder(Order order, TradeExecutionResult.Builder resultBuilder) {
         BigDecimal remainingQty = order.getQuantity();
         
         // 买单
@@ -140,7 +140,7 @@ public class MatchingEngine {
      * @return 剩余未成交数量
      */
     private BigDecimal matchWithOrderBook(Order takerOrder, BigDecimal remainingQty, boolean isBuyMatching,
-                                       TradeExecutionResult.TradeExecutionResultBuilder resultBuilder) {
+                                       TradeExecutionResult.Builder resultBuilder) {
         // 获取对应的订单簿（买或卖）
         NavigableMap<BigDecimal, PriceBucket> bookSide = isBuyMatching ? orderBook.getBids() : orderBook.getAsks();
         
