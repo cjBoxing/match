@@ -1,0 +1,86 @@
+交易对表：
+CREATE TABLE `tb_symbol` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `symbol` char(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `type` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '1现货 2 交割合约 3 永续合约',
+  `base_coin` char(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '交易货币',
+  `quote_coin` char(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '计价货币',
+  `per` decimal(20,8) unsigned NOT NULL DEFAULT '0.00000000' COMMENT '合约面值',
+  `show` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '是否显示',
+  `status` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '1正常交易 2 交易对已下线 (例如合约已交割)',
+  `market_order` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '市价单是否开启',
+  `price_decimal` tinyint unsigned NOT NULL DEFAULT '8' COMMENT '价格小数位',
+  `quantity_decimal` tinyint unsigned NOT NULL DEFAULT '8' COMMENT '数量小数位',
+  `lever` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '支持的最高杠杆倍数  不开杠杆写1',
+  `settle_time` bigint unsigned NOT NULL DEFAULT '0' COMMENT '交割合约的交割时间',
+  `margin_type` tinyint unsigned NOT NULL DEFAULT '2' COMMENT '1币本位合约 2 U本位合约',
+  `margin_coin` char(10) COLLATE utf8mb4_general_ci NOT NULL COMMENT '保证金币种',
+  `margin_decimal` tinyint unsigned NOT NULL DEFAULT '8' COMMENT '保证金小数位长度',
+  `start_time` bigint unsigned NOT NULL DEFAULT '0' COMMENT '开始交易时间',
+  `stop_time` bigint unsigned NOT NULL DEFAULT '0' COMMENT '交易停止时间',
+  `fund_rate_max` decimal(10,8) unsigned NOT NULL DEFAULT '0.00000000' COMMENT '资金费上限',
+  `fund_rate_min` decimal(10,8) unsigned NOT NULL DEFAULT '0.00000000' COMMENT '资金费下限',
+  `x` decimal(10,8) unsigned NOT NULL DEFAULT '0.00000000' COMMENT '限价参数X',
+  `y` decimal(10,8) unsigned NOT NULL DEFAULT '0.00000000' COMMENT '限价参数Y',
+  `z` decimal(10,8) unsigned NOT NULL DEFAULT '0.00000000' COMMENT '限价参数Z',
+  `buy_taker_fee` decimal(8,6) unsigned NOT NULL DEFAULT '0.000000' COMMENT '买方吃单手续费率',
+  `buy_maker_fee` decimal(8,6) unsigned NOT NULL DEFAULT '0.000000' COMMENT '买方挂单手续费率',
+  `sell_taker_fee` decimal(8,6) unsigned NOT NULL DEFAULT '0.000000' COMMENT '卖方吃单手续费率',
+  `sell_maker_fee` decimal(8,6) unsigned NOT NULL DEFAULT '0.000000' COMMENT '卖方挂单手续费率',
+  `price_min` decimal(22,10) unsigned NOT NULL DEFAULT '0.0000000000' COMMENT '价格限制下限 需要配合时间区间使用',
+  `price_max` decimal(22,10) unsigned NOT NULL DEFAULT '0.0000000000' COMMENT '价格限制上限 需要配合时间区间使用',
+  `limit_start` bigint unsigned NOT NULL DEFAULT '0' COMMENT '价格限制开始时间',
+  `limit_end` bigint unsigned NOT NULL DEFAULT '0' COMMENT '价格限制结束时间',
+  `partition` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '交易对所在分片',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_symbol` (`symbol`),
+  UNIQUE KEY `uniq_symbol_setting` (`base_coin`,`quote_coin`,`type`,`settle_time`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='交易对表';
+
+委托记录表:
+CREATE TABLE `tb_orders` (
+  `id` bigint unsigned NOT NULL,
+  `algo_id` bigint unsigned NOT NULL DEFAULT '0' COMMENT '策略交易id',
+  `user_id` bigint unsigned NOT NULL COMMENT '用户id',
+  `symbol` char(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '交易对',
+  `type` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '1 限价 2 只做挂单 3 全成交或全取消 4 成交后取消剩余 5市价委托',
+  `price` decimal(32,16) unsigned NOT NULL DEFAULT '0.0000000000000000' COMMENT '委托价格  市价单写0',
+  `price_avg` decimal(32,16) unsigned NOT NULL DEFAULT '0.0000000000000000' COMMENT '成交均价',
+  `quantity` decimal(32,16) unsigned NOT NULL DEFAULT '0.0000000000000000' COMMENT '委托量 现货的数量，合约的张数',
+  `quantity_done` decimal(32,16) unsigned NOT NULL DEFAULT '0.0000000000000000' COMMENT '已成交量',
+  `quantity_left` decimal(32,16) unsigned NOT NULL DEFAULT '0.0000000000000000' COMMENT '剩余未成交',
+  `quantity_close` decimal(32,16) unsigned NOT NULL DEFAULT '0.0000000000000000' COMMENT '买卖模式 这笔委托中，平仓单张数',
+  `volume_max` decimal(32,16) unsigned NOT NULL DEFAULT '0.0000000000000000' COMMENT '现货市价单，成交额上限',
+  `margin_type` tinyint unsigned NOT NULL COMMENT '保证金类型 0 现货 1 币本位合约或杠杆 2 u本位合约或杠杆',
+  `price_stop` decimal(32,16) unsigned NOT NULL COMMENT '市价交易价格限制  买的上限 卖的下限',
+  `side` tinyint unsigned NOT NULL COMMENT '1买 2 卖',
+  `action` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '0现货 1 开仓 2 平仓 3 买卖模式仓位自动',
+  `margin_mode` tinyint unsigned NOT NULL COMMENT '0普通现货  1 逐仓 2 全仓',
+  `status` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '1 等待撮合 2 挂单中  3 已成交 4 已撤单',
+  `only_reduce` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '是否为只减仓',
+  `margin_coin` char(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '合约或杠杆的保证金币种',
+  `tag` tinyint unsigned NOT NULL COMMENT '1 用户委托  2 爆仓或减仓委托 3 策略交易触发',
+  `pnl` decimal(32,16) NOT NULL DEFAULT '0.0000000000000000' COMMENT '产生的盈亏  Profit and Loss',
+  `create_time` bigint unsigned NOT NULL COMMENT '委托时间',
+  `update_time` bigint unsigned NOT NULL COMMENT '更新时间  用户撤单和撮合成交都会更改这个字段',
+  PRIMARY KEY (`id`),
+  KEY `idx_user` (`user_id`,`symbol`),
+  KEY `idx_symbol` (`symbol`,`side`,`price`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='委托表';
+
+现在需要用java21，SpringBoot3.4.4，kafka 来实现一份交易撮合系统。
+交易对的partition字段是这个交易对所属的分片，每个分片对应一个kafka 分区，新加委托单、撤单请求进入撮合是通过kafka，主题是match_orders，每条消息通过key来区分是新委托单还是撤单请求，然后再通过io.protostuff来解出消息的data。每个partition，启动两个线程，一个是撮合线程，拉kafka消息，然后撮合，产生撮合结果消息，放到内存的待发送消息队列中。一个是发送kafka消息的线程，通过内存中的待发送消息队列把消息发送给kafka，如果中途有发送失败的，要自动重试。
+撮合线程产生的数据有多条消息，taker的成交结果、maker的成交结果、公共数据成交结果、订单簿的数据增量（其中要包括委托单变化、消费kafka最后一条消息的offset）。 
+发送给taker和maker的成交结果，是按照用户纬度拆分的，((userId / 19) % 100) 来计算出用户所在的分片，每个分片对应一个kafka分区，主题名 user_operation_tasks。
+公共成交数据、订单簿数据增量，所在分片编号和交易对的partition相同，公共成交数据主题名 match_trades，订单簿数据增量主题名order_book_updates。
+发给kafka的每条数据，都要有独立的id，用于业务端排重，可以通过taker和maker的委托单id来进行组合。
+撮合要做成主备模式。
+备用节点的职责：
+1、通过主节点产生的订单簿数据增量，维护内存中的订单簿数据，并维护好数据增量消息的offset，生成订单簿的全量数据和增量数据；
+2、每隔5分钟，把内存中的订单簿数据，通过io.protostuff 序列化，然后保存到MongoDb的GridFs中。
+3、滚动升级或者主节点异常的时候，转为主节点。
+
+撮合启动的时候，要根据自己的节点，去redis中取自己节点需要处理的交易对分片，然后加载GridFs中的数据，根据GridFs中的数据和后续的kafka消息，重放出准确数据来。
+通过nacos来维护主和从的切换。
+
+
